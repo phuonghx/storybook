@@ -154,7 +154,6 @@ export default class StoryStore {
 
   finishConfiguring() {
     this._configuring = false;
-    this.pushToManager();
 
     const { globalArgs: initialGlobalArgs, globalArgTypes } = this._globalMetadata.parameters;
 
@@ -180,9 +179,8 @@ export default class StoryStore {
       },
       { ...defaultGlobalArgs, ...initialGlobalArgs }
     );
-    if (this._channel) {
-      this._channel.emit(Events.GLOBAL_ARGS_UPDATED, this._globalArgs);
-    }
+
+    this.pushToManager();
   }
 
   addGlobalMetadata({ parameters, decorators }: StoryMetadata) {
@@ -498,6 +496,7 @@ export default class StoryStore {
     return {
       v: 2,
       globalParameters: this._globalMetadata.parameters,
+      globalArgs: this._globalArgs,
       error: this.getError(),
       kindParameters: mapValues(this._kinds, (metadata) => metadata.parameters),
       stories: this.extract({ includeDocsOnly: true, normalizeParameters: true }),
