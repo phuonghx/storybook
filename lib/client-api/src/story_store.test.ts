@@ -833,45 +833,4 @@ describe('preview.story_store', () => {
       store.removeStoryKind('kind');
     });
   });
-
-  describe('RENDER_CURRENT_STORY', () => {
-    it('is NOT emitted when setError is called', () => {
-      const onRenderCurrentStory = jest.fn();
-      channel.on(Events.RENDER_CURRENT_STORY, onRenderCurrentStory);
-      const store = new StoryStore({ channel });
-
-      store.setError(new Error('Something is bad!') as ErrorLike);
-      store.finishConfiguring();
-      expect(onRenderCurrentStory).not.toHaveBeenCalled();
-    });
-
-    it('is NOT emitted when setSelection is called during configuration', () => {
-      const onRenderCurrentStory = jest.fn();
-      channel.on(Events.RENDER_CURRENT_STORY, onRenderCurrentStory);
-      const store = new StoryStore({ channel });
-
-      store.setSelection({ storyId: 'a--1', viewMode: 'story' });
-      expect(onRenderCurrentStory).not.toHaveBeenCalled();
-    });
-
-    it('is NOT emitted when configuration ends', () => {
-      const onRenderCurrentStory = jest.fn();
-      channel.on(Events.RENDER_CURRENT_STORY, onRenderCurrentStory);
-      const store = new StoryStore({ channel });
-
-      store.finishConfiguring();
-      expect(onRenderCurrentStory).not.toHaveBeenCalled();
-    });
-
-    it('is emitted when setSelection is called outside of configuration', () => {
-      const onRenderCurrentStory = jest.fn();
-      channel.on(Events.RENDER_CURRENT_STORY, onRenderCurrentStory);
-      const store = new StoryStore({ channel });
-      store.finishConfiguring();
-
-      onRenderCurrentStory.mockClear();
-      store.setSelection({ storyId: 'a--1', viewMode: 'story' });
-      expect(onRenderCurrentStory).toHaveBeenCalled();
-    });
-  });
 });

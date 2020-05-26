@@ -112,7 +112,7 @@ export default class StoryStore {
 
   _revision: number;
 
-  _selection: Selection;
+  _selection?: Selection;
 
   constructor(params: { channel: Channel }) {
     // Assume we are configuring until we hear otherwise
@@ -124,7 +124,6 @@ export default class StoryStore {
     this._stories = {};
     this._argTypesEnhancers = [];
     this._revision = 0;
-    this._selection = {} as any;
     this._error = undefined;
     this._channel = params.channel;
 
@@ -481,12 +480,6 @@ export default class StoryStore {
 
     if (this._channel) {
       this._channel.emit(Events.CURRENT_STORY_WAS_SET, this._selection);
-
-      // If the selection is set while configuration is in process, we are guaranteed
-      // we'll emit RENDER_CURRENT_STORY at the end of the process, so we shouldn't do it now.
-      if (!this._configuring) {
-        this._channel.emit(Events.RENDER_CURRENT_STORY);
-      }
     }
   }
 

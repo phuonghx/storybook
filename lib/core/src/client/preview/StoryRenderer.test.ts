@@ -2,7 +2,8 @@ import { StoryStore, defaultDecorateStory } from '@storybook/client-api';
 import createChannel from '@storybook/channel-postmessage';
 import {
   FORCE_RE_RENDER,
-  RENDER_CURRENT_STORY,
+  SET_STORIES,
+  CURRENT_STORY_WAS_SET,
   STORY_ERRORED,
   STORY_THREW_EXCEPTION,
   STORY_MISSING,
@@ -45,7 +46,7 @@ function prepareRenderer() {
   return { render, channel, storyStore, renderer };
 }
 
-function addAndSelectStory(
+function addStory(
   storyStore: StoryStore,
   kind: StoryKind,
   name: StoryName,
@@ -58,6 +59,15 @@ function addAndSelectStory(
       applyDecorators: defaultDecorateStory,
     }
   );
+  return id;
+}
+function addAndSelectStory(
+  storyStore: StoryStore,
+  kind: StoryKind,
+  name: StoryName,
+  parameters: Parameters = {}
+) {
+  const id = addStory(storyStore, kind, name, parameters);
   storyStore.setSelection({ storyId: id, viewMode: 'story' });
 }
 
@@ -111,15 +121,13 @@ describe('core.preview.StoryRenderer', () => {
 
     it('renders an error if the story calls renderError', () => {
       const { render, channel, storyStore, renderer } = prepareRenderer();
-      addAndSelectStory(storyStore, 'a', '1');
+      const err = { title: 'title', description: 'description' };
+      render.mockImplementation(({ showError }) => showError(err));
 
       const onStoryErrored = jest.fn();
       channel.on(STORY_ERRORED, onStoryErrored);
 
-      const err = { title: 'title', description: 'description' };
-      render.mockImplementation(({ showError }) => showError(err));
-      renderer.renderCurrentStory(false);
-
+      addAndSelectStory(storyStore, 'a', '1');
       expect(renderer.showErrorDisplay).toHaveBeenCalledWith({
         message: 'title',
         stack: 'description',
@@ -129,14 +137,14 @@ describe('core.preview.StoryRenderer', () => {
 
     it('renders an exception if the story calls renderException', () => {
       const { render, channel, storyStore, renderer } = prepareRenderer();
-      addAndSelectStory(storyStore, 'a', '1');
 
       const onStoryThrewException = jest.fn();
       channel.on(STORY_THREW_EXCEPTION, onStoryThrewException);
 
       const err = { message: 'message', stack: 'stack' };
       render.mockImplementation(({ showException }) => showException(err));
-      renderer.renderCurrentStory(false);
+
+      addAndSelectStory(storyStore, 'a', '1');
 
       expect(renderer.showErrorDisplay).toHaveBeenCalledWith(err);
       expect(onStoryThrewException).toHaveBeenCalledWith(err);
@@ -144,7 +152,6 @@ describe('core.preview.StoryRenderer', () => {
 
     it('renders an exception if the render function throws', () => {
       const { render, channel, storyStore, renderer } = prepareRenderer();
-      addAndSelectStory(storyStore, 'a', '1');
 
       const onStoryThrewException = jest.fn();
       channel.on(STORY_THREW_EXCEPTION, onStoryThrewException);
@@ -153,7 +160,8 @@ describe('core.preview.StoryRenderer', () => {
       render.mockImplementation(() => {
         throw err;
       });
-      renderer.renderCurrentStory(false);
+
+      addAndSelectStory(storyStore, 'a', '1');
 
       expect(renderer.showErrorDisplay).toHaveBeenCalledWith(err);
       expect(onStoryThrewException).toHaveBeenCalledWith(err);
@@ -161,13 +169,12 @@ describe('core.preview.StoryRenderer', () => {
 
     it('renders an error if the story is missing', () => {
       const { render, channel, storyStore, renderer } = prepareRenderer();
-      addAndSelectStory(storyStore, 'a', '1');
-      storyStore.setSelection({ storyId: 'b--2', viewMode: 'story' });
 
       const onStoryMissing = jest.fn();
       channel.on(STORY_MISSING, onStoryMissing);
 
-      renderer.renderCurrentStory(false);
+      addStory(storyStore, 'a', '1');
+      storyStore.setSelection({ storyId: 'b--2', viewMode: 'story' });
 
       expect(render).not.toHaveBeenCalled();
 
@@ -179,8 +186,6 @@ describe('core.preview.StoryRenderer', () => {
   describe('docs mode', () => {
     it('renders docs and emits when rendering a docs story', () => {
       const { render, channel, storyStore, renderer } = prepareRenderer();
-      addAndSelectStory(storyStore, 'a', '1');
-      storyStore.setSelection({ storyId: 'a--1', viewMode: 'docs' });
 
       const onDocsRendered = jest.fn();
       channel.on(DOCS_RENDERED, onDocsRendered);
@@ -188,7 +193,8 @@ describe('core.preview.StoryRenderer', () => {
         ReactDOM.Renderer
       >).mockImplementationOnce((element, node, callback) => callback());
 
-      renderer.renderCurrentStory(false);
+      addStory(storyStore, 'a', '1');
+      storyStore.setSelection({ storyId: 'a--1', viewMode: 'docs' });
 
       // Although the docs React component may ultimately render the story we are mocking out
       // `react-dom` and just check that *something* is being rendered by react at this point
@@ -198,10 +204,8 @@ describe('core.preview.StoryRenderer', () => {
 
     it('hides the root and shows the docs root as well as main when rendering a docs story', () => {
       const { storyStore, renderer } = prepareRenderer();
-      addAndSelectStory(storyStore, 'a', '1');
+      addStory(storyStore, 'a', '1');
       storyStore.setSelection({ storyId: 'a--1', viewMode: 'docs' });
-
-      renderer.renderCurrentStory(false);
 
       expect(renderer.showDocs).toHaveBeenCalled();
       expect(renderer.showMain).toHaveBeenCalled();
@@ -209,10 +213,9 @@ describe('core.preview.StoryRenderer', () => {
 
     it('hides the docs root and shows the root, but does not show main when rendering a normal story', () => {
       const { render, storyStore, renderer } = prepareRenderer();
-      addAndSelectStory(storyStore, 'a', '1');
+      addStory(storyStore, 'a', '1');
 
       storyStore.setSelection({ storyId: 'a--1', viewMode: 'docs' });
-      renderer.renderCurrentStory(false);
 
       (renderer.showStory as jest.Mock<any>).mockClear();
       (renderer.showMain as jest.Mock<any>).mockClear();
@@ -385,11 +388,19 @@ describe('core.preview.StoryRenderer', () => {
   });
 
   describe('event handling', () => {
-    it('renders on RENDER_CURRENT_STORY', () => {
+    it('renders on SET_STORIES', () => {
       const { channel, renderer } = prepareRenderer();
       renderer.renderCurrentStory = jest.fn();
 
-      channel.emit(RENDER_CURRENT_STORY);
+      channel.emit(SET_STORIES);
+      expect(renderer.renderCurrentStory).toHaveBeenCalledWith(false);
+    });
+
+    it('renders on CURRENT_STORY_WAS_SET', () => {
+      const { channel, renderer } = prepareRenderer();
+      renderer.renderCurrentStory = jest.fn();
+
+      channel.emit(CURRENT_STORY_WAS_SET);
       expect(renderer.renderCurrentStory).toHaveBeenCalledWith(false);
     });
 

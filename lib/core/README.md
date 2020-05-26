@@ -25,4 +25,6 @@ Each module uses the channel to communicate with each other and the manager. Eac
 
 The store can only be changed during "configuration". The `ConfigApi` will call `store.startConfiguration()`, then the user code (or `loadCsf`'s loader) which will use client API to load up stories. At the end of the user's code the `ConfigApi` will call `store.finishConfiguration()`. At this point the `SET_STORIES` event is emitted and the stories are transmitted to the manager.
 
-The `SET_CURRENT_STORY` "command" event can be used to set the selection on the store. However only once this has been recieved _and_ configuration is over will the store use the `RENDER_CURRENT_STORY` to tell the `StoryRenderer` to render it.
+The `SET_CURRENT_STORY` "command" event can be used to set the selection on the store. Once set it will emit the `CURRENT_STORY_WAS_SET` event.
+
+The story renderer will render both when `SET_STORIES` and `CURRENT_STORY_WAS_SET` is called. However if the selection has not yet been set on `SET_STORIES`, nothing will happen.
