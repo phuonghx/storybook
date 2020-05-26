@@ -110,9 +110,7 @@ export default class StoryStore {
 
   _argTypesEnhancers: ArgTypesEnhancer[];
 
-  _revision: number;
-
-  _selection?: Selection;
+  _selection: Selection;
 
   constructor(params: { channel: Channel }) {
     // Assume we are configuring until we hear otherwise
@@ -123,7 +121,7 @@ export default class StoryStore {
     this._kinds = {};
     this._stories = {};
     this._argTypesEnhancers = [];
-    this._revision = 0;
+    this._selection = {} as any;
     this._error = undefined;
     this._channel = params.channel;
 
@@ -513,14 +511,6 @@ export default class StoryStore {
 
   getRawStory(kind: string, name: string) {
     return this.getStoriesForKind(kind).find((s) => s.name === name);
-  }
-
-  getRevision() {
-    return this._revision;
-  }
-
-  incrementRevision() {
-    this._revision += 1;
   }
 
   cleanHooks(id: string) {

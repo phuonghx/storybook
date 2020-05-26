@@ -1,3 +1,4 @@
+// a
 import { StoryStore, defaultDecorateStory } from '@storybook/client-api';
 import createChannel from '@storybook/channel-postmessage';
 import {
@@ -251,8 +252,8 @@ describe('core.preview.StoryRenderer', () => {
         id: 'a--1',
         kind: 'a',
         name: '1',
-        revision: 0,
         viewMode: 'story',
+        getDecorated: expect.any(Function),
       });
     });
     it('does re-render the current story if it has not changed if forceRender is true', () => {
@@ -285,7 +286,7 @@ describe('core.preview.StoryRenderer', () => {
 
       expect(onStoryChanged).toHaveBeenCalledWith('a--1');
     });
-    it('does re-render if the store revision changes', () => {
+    it('does re-render if the story implementation changes', () => {
       const { render, channel, storyStore, renderer } = prepareRenderer();
       addAndSelectStory(storyStore, 'a', '1');
       renderer.renderCurrentStory(false);
@@ -294,7 +295,8 @@ describe('core.preview.StoryRenderer', () => {
       channel.on(STORY_CHANGED, onStoryChanged);
 
       render.mockClear();
-      storyStore.incrementRevision();
+      storyStore.removeStoryKind('a');
+      addAndSelectStory(storyStore, 'a', '1');
       renderer.renderCurrentStory(false);
       expect(render).toHaveBeenCalled();
 
