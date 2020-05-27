@@ -110,7 +110,7 @@ export default class StoryStore {
 
   _argTypesEnhancers: ArgTypesEnhancer[];
 
-  _selection: Selection;
+  _selection?: Selection;
 
   constructor(params: { channel: Channel }) {
     // Assume we are configuring until we hear otherwise
@@ -121,7 +121,6 @@ export default class StoryStore {
     this._kinds = {};
     this._stories = {};
     this._argTypesEnhancers = [];
-    this._selection = {} as any;
     this._error = undefined;
     this._channel = params.channel;
 
